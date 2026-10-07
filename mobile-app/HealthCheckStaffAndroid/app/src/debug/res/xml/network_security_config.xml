@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  【僅限 Debug / 開發環境】
+  專題 Backend 目前以 http://<LAN IP>:8080 提供服務（非 HTTPS），且 LAN IP 尚未固定，
+  因此 Debug build 允許明文 HTTP。Release build 不套用此設定（維持 Android 預設：禁止 cleartext）。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -14,7 +14,7 @@
 - Oracle Database：Schema、Seed 與 ERD，後端以 JdbcTemplate 存取。
 - Web / API / Oracle 串接：Web 預設使用真 API，已保存只讀查詢及拒絕情境驗收紀錄。
 - WS1 / WS2 核心流程：資格與前置條件判斷、確認碼、交易式完成更新及重複提交保護。
-- Android App API 串接已驗證、跨端資料同步測試：依專題負責人提供的 V1 完成說明；Android 原始碼及該次測試證據尚未納入此 Repository。
+- Android App API 串接已驗證、跨端資料同步測試：依專題負責人提供的 V1 完成說明；Android 原始碼已納入 `mobile-app/`；原有本機測試日誌未上傳，此次編譯結果見 `mobile-app/README.md`。
 - 現有 Repository 驗收紀錄仍將真實 Oracle WS1→WS2 成功、成功後同步更新與相同確認碼 409 列為待合法時段驗證；Mock／單元測試成功不視為真 Oracle E2E 完成。
 
 ## V1 系統架構
@@ -24,7 +24,7 @@ Web Frontend ──→ Spring Boot REST API ──→ Oracle Database
 Android App ──→ Spring Boot REST API ──→ Oracle Database
 ```
 
-Web 與 App 都透過 Spring Boot REST API，不直接存取 Oracle。Android App 目前位於另外的專案資料夾，後續才加入。
+Web 與 App 都透過 Spring Boot REST API，不直接存取 Oracle。Android App 已加入 `mobile-app/`，包含受檢者與工作人員兩個獨立 Android Studio 專案。
 
 技術：React、TypeScript、Vite、Tailwind CSS、shadcn/ui、TanStack Query、MSW、qr-scanner。
 
@@ -32,6 +32,7 @@ Web 與 App 都透過 Spring Boot REST API，不直接存取 Oracle。Android Ap
 frontend/       前端、API layer、MSW 與測試
 backend/        Spring Boot Patient / WS1 / WS2 / Next / Admin APIs、Maven Wrapper 與測試
 database/       既有 SQL、ERD 與交接規格
+mobile-app/     Android 受檢者 / 工作人員 App
 docs/           API contract、執行紀錄
 PROJECT_STATUS.md
 health_check_schema.sql / health_check_seed.sql / Health_Check_ERD.png
@@ -39,7 +40,29 @@ api-docs.json / 啟動方式.txt
 README.md / .gitignore
 ```
 
-保留目前可運作的 `frontend/`、`backend/`、`database/` 名稱與路徑，不搬動程式。`docs/` 已包含 API 與測試文件；後續 Word / PDF / PPT 也放在這裡。Android 專案 `AAAAAAAAA` 將於後續整理至同一 Repository 的 `mobile-app/`，目前未建立空目錄或假程式。
+保留目前可運作的 `frontend/`、`backend/`、`database/` 名稱與路徑，不搬動程式。`docs/` 已包含 API 與測試文件；後續 Word / PDF / PPT 也放在這裡。Android 來源為 `D:\AAAAAAAAa\Health\HealthCheckAndroid`，已完整整理至 `mobile-app/`；原始資料夾保留。Web 使用實際既有路徑 `frontend/`。
+
+
+## Android App 啟動
+
+`mobile-app/` 包含兩個完整專案，請在 Android Studio 分別開啟：
+
+- `mobile-app/HealthCheckPatientAndroid`：受檢者，`com.healthcheck.patient`。
+- `mobile-app/HealthCheckStaffAndroid`：工作人員，`com.healthcheck.staff`。
+
+專案既有環境：Android Gradle Plugin 8.13.0、Gradle Wrapper 8.14.3、Kotlin 2.2.20、JDK 17+、Android SDK Platform 36，最低裝置版本 Android 8.0 / API 26。使用支援該 AGP 的 Android Studio，透過 SDK Manager 準備 SDK，並讓 IDE 產生各專案自己的 `local.properties`（不提交）。可使用 Emulator 或符合版本的 Android 真機。
+
+先依上方方式啟動 Spring Boot Backend（8080）並完成 Oracle 連線。兩個專案的 `gradle.properties` 中 `healthcheck.baseUrl` 目前皆為 `http://192.168.0.100:8080/`，未修改。各自 `app/build.gradle.kts` 注入 `BuildConfig.DEFAULT_BASE_URL`；執行期設定與 Retrofit 位於各專案 `app/src/main/java/com/healthcheck/patient/data/api/ApiConfig.kt` 或 `com/healthcheck/staff/data/api/ApiConfig.kt`。
+
+App 右上角「伺服器設定」可覆寫 URL，儲存在 SharedPreferences。只有 Emulator 與 Backend 在同一台電腦時才使用 `http://10.0.2.2:8080/`；真機或另一台電腦的 Backend 使用可連線的 LAN IP。Debug 允許 HTTP，Release 不允許 HTTP。這些均為既有行為。
+
+分別進入兩個 Android 專案目錄後執行：
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+各自 APK 輸出：`app/build/outputs/apk/debug/app-debug.apk`。更多說明與本次驗證見 [mobile-app/README.md](mobile-app/README.md)。Web 與 Android App 都不直接存取 Oracle Database，而是透過 Spring Boot REST API 存取資料。
 
 ## Oracle Database 初始化
 
@@ -130,10 +153,10 @@ Backend 啟動、環境變數、Swagger 與 Oracle smoke test 步驟見 [backend
 
 ## 版本規劃
 
-- **V1.0**：保存 CRUD + REST API + Oracle Database + Web/App Integration 的專題基礎成果；各項可追溯的實測範圍與待驗項目以上述說明及測試報告為準。成功發布後以 `v1.0` tag 保存此版。
+- **V1.0**：保存 CRUD + REST API + Oracle Database + Web/App Integration 的專題基礎成果；各項可追溯的實測範圍與待驗項目以上述說明及測試報告為準。既有 `v1.0` tag 保持原指向，早於 Android App 加入；待 Word / PDF / PPT 齊備後再決定最終 V1 tag，不移動或覆蓋現有 tag。
 - **V2.0（規劃中，尚未完成）**：預計加入 Constraint Programming、多目標排程與動態重新排程，在 V1 架構上繼續開發。
 
-完成 V1 階段報告後，繼續在同一 Repository 的 `main` 開發 V2，加入 Android App 與 Word / PDF / PPT。V2 完成後再建立 `v2.0` tag，不建立獨立 V1／V2 Repository，也不覆蓋 V1 歷史。
+Android App 已加入同一 Repository 的 `main`；接下來先把 V1 Word / PDF / PPT 加入 `docs/`。V2 僅保留原有規劃，本次未開發。V2 完成後再建立 `v2.0` tag，不建立獨立 V1／V2 Repository，也不覆蓋 V1 歷史。
 
 
 
