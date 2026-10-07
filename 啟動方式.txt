@@ -1,0 +1,12 @@
+前端啟動方式：
+cd D:\HealthCheckAssistant\frontend
+npm run dev
+
+API啟動
+cd D:\HealthCheckAssistant\backend
+
+$env:DB_USERNAME="HEALTH_CHECK"
+
+$env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Oracle password' -AsSecureString)).Password
+
+.\mvnw.cmd spring-boot:run

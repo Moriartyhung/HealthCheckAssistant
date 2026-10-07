@@ -1,0 +1,46 @@
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/.env.local
+backend/target/
+backend/.idea/
+backend/.vscode/
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-local.properties
+.tools/
+.maven-cache/
+.maven-user/
+
+# Build outputs and local tooling (all modules)
+node_modules/
+dist/
+target/
+*.tsbuildinfo
+*.class
+*.log
+
+# Local environment files; keep reviewed, non-secret examples and mock mode
+.env
+.env.*
+!.env.example
+!frontend/.env.mock
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# IDE / OS metadata (no shared IDE configuration currently exists)
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Private credentials and keystores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks

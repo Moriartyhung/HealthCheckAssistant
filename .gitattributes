@@ -1,0 +1,5 @@
+# Preserve Oracle exports byte-for-byte, including their original encoding/EOL.
+*.sql -text
+
+# Maven Wrapper must remain runnable on Unix after cloning.
+backend/mvnw text eol=lf
