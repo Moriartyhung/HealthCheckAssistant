@@ -11,7 +11,7 @@ Java 17+；java -version 顯示 23.0.1，但 Maven Wrapper 依 JAVA_HOME 實際�
 在同一個 PowerShell session 執行；密碼由本機安全提示輸入，不寫進檔案或命令歷史：
 
 ```powershell
-cd D:\HealthCheckAssistant\backend
+cd D:\HealthCheckAssistant_V1_Latest\backend
 $env:DB_URL = 'jdbc:oracle:thin:@localhost:1521:orcl'
 $env:DB_USERNAME = 'HEALTH_CHECK'
 $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Oracle password' -AsSecureString)).Password
@@ -233,9 +233,9 @@ Swagger 新增 admin-controller，可直接 Execute。普通 test / clean packag
 本機 Wrapper 修正 Windows PowerShell 的空 Target 索引；若需使用專案既有 Maven cache：
 
 ```powershell
-$env:MAVEN_USER_HOME = 'D:\HealthCheckAssistant\.maven-user'
-.\mvnw.cmd '-Dmaven.repo.local=D:\HealthCheckAssistant\.maven-cache' test
-.\mvnw.cmd '-Dmaven.repo.local=D:\HealthCheckAssistant\.maven-cache' clean package
+$env:MAVEN_USER_HOME = 'D:\HealthCheckAssistant_V1_Latest\.maven-user'
+.\mvnw.cmd '-Dmaven.repo.local=D:\HealthCheckAssistant_V1_Latest\.maven-cache' test
+.\mvnw.cmd '-Dmaven.repo.local=D:\HealthCheckAssistant_V1_Latest\.maven-cache' clean package
 ```
 
 真實 Oracle smoke 尚待新版服務啟動（agent 無 DB_PASSWORD）。使用前述安全輸入方式或原已設定密碼的 session 啟動，然後：

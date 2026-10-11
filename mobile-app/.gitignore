@@ -1,14 +1,1 @@
 build-logs/
-
-# Android projects: preserve wrappers, source and reviewed gradle.properties
-.gradle/
-local.properties
-build/
-captures/
-.externalNativeBuild/
-.cxx/
-*.keystore
-*.apk
-*.aab
-mobile-app/build-logs/
-mobile-app/**/google-services.json

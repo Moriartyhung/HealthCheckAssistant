@@ -1,16 +1,20 @@
 # 健檢現場流程助手 2026
 
-**Health Check Assistant 2026 — V1.0**
+**Health Check Assistant 2026 — V1.1.0**
+
+Version: v1.1.0
+
+本次更新 Web 患者 CRUD 與檢查安排，整合 frontend / backend / mobile-app / database 至同一 Repository，保留 Spring Boot REST API 與 Oracle 架構。Web 與 Android 共用 API；真實跨端驗證範圍以驗收文件為準。發布副本的 Build / Test 結果見 Release notes。
 
 此 Repository 保存 V1 基礎系統，後續 Android App、專題文件與 V2 都沿用同一個 Repository，以 commit 與版本 tag 保留歷史。
 
 協助工作人員確認檢查資格、受檢者查看健檢進度與下一站，以及管理者監看當日進度。
-目前完成 Frontend Prototype v1、Backend v1 五支 API 與 Integration 的模式切換/API wiring。Frontend development 預設透過 Vite proxy 呼叫真 Backend；Mock Demo 需明確啟用。既有測試紀錄為前端 17 tests/build、後端 128 tests/clean package 通過。真 Oracle 瀏覽器驗收已通過 Patient、Next、Admin 與 WS1；WS2 無效碼已經 Vite proxy 驗證。成功 WS1→WS2 E2E 尚待合法時段，詳見 [驗收報告](docs/FINAL_E2E_TEST_REPORT.md)。
+目前完成 Frontend Prototype v1、Backend v1 核心流程與患者管理／檢查安排 API 與 Integration 的模式切換/API wiring。Frontend development 預設透過 Vite proxy 呼叫真 Backend；Mock Demo 需明確啟用。V1.1 發布副本驗證：前端 31 項測試與 build、後端 158 項測試與 package 通過；兩個 Android App 的 Debug 編譯與既有單元測試通過。真 Oracle 瀏覽器驗收已通過 Patient、Next、Admin 與 WS1；WS2 無效碼已經 Vite proxy 驗證。成功 WS1→WS2 E2E 尚待合法時段，詳見 [驗收報告](docs/FINAL_E2E_TEST_REPORT.md)。
 
 ## V1 功能與驗證範圍
 
-- Web 前端 CRUD：依專題負責人提供的 V1 完成說明列入成果；目前此資料夾主要提供 Staff、Patient、Admin 的資格判斷、完成更新與查詢流程，未提供完整通用 CRUD 管理介面。
-- Spring Boot REST API：Patient Exams、WS1、WS2、Next Exam、Admin Progress 五支 API。
+- Web 前端 CRUD：管理者可新增、查詢、修改、刪除患者，以及安排／調整患者檢查項目；保留 Staff、Patient、Admin 的資格判斷、完成更新與進度查詢流程。
+- Spring Boot REST API：Patient Exams、WS1、WS2、Next Exam、Admin Progress，加上管理者患者 CRUD 與檢查目錄／安排 API。
 - Oracle Database：Schema、Seed 與 ERD，後端以 JdbcTemplate 存取。
 - Web / API / Oracle 串接：Web 預設使用真 API，已保存只讀查詢及拒絕情境驗收紀錄。
 - WS1 / WS2 核心流程：資格與前置條件判斷、確認碼、交易式完成更新及重複提交保護。
@@ -88,7 +92,7 @@ Node.js 22.12+ 或 24 LTS、npm、Java 17+。Backend 使用 Maven Wrapper（不�
 Terminal 1：
 
 ```powershell
-cd D:\HealthCheckAssistant\backend
+cd D:\HealthCheckAssistant_V1_Latest\backend
 $env:DB_URL = 'jdbc:oracle:thin:@localhost:1521:orcl'
 $env:DB_USERNAME = 'HEALTH_CHECK'
 $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Oracle password' -AsSecureString)).Password
@@ -100,8 +104,8 @@ Backend 為 http://localhost:8080，Swagger 為 http://localhost:8080/swagger-ui
 Terminal 2：
 
 ```powershell
-cd D:\HealthCheckAssistant\frontend
-npm install
+cd D:\HealthCheckAssistant_V1_Latest\frontend
+npm ci --include=dev
 npm run dev
 ```
 
@@ -123,7 +127,7 @@ npm run build
 Backend 不在時：
 
 ```powershell
-cd D:\HealthCheckAssistant\frontend
+cd D:\HealthCheckAssistant_V1_Latest\frontend
 npm run dev:mock
 ```
 

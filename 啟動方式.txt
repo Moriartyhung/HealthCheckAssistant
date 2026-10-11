@@ -1,12 +1,14 @@
-前端啟動方式：
-cd D:\HealthCheckAssistant\frontend
+前端啟動（PowerShell 視窗 1）：
+cd D:\HealthCheckAssistant_V1_Latest\frontend
 npm run dev
 
-API啟動
-cd D:\HealthCheckAssistant\backend
-
-$env:DB_USERNAME="HEALTH_CHECK"
-
+API 啟動（PowerShell 視窗 2）：
+cd D:\HealthCheckAssistant_V1_Latest\backend
+$env:DB_URL = 'jdbc:oracle:thin:@localhost:1521:orcl'
+$env:DB_USERNAME = 'HEALTH_CHECK'
+$env:SERVER_PORT = '8080'
 $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Oracle password' -AsSecureString)).Password
-
 .\mvnw.cmd spring-boot:run
+
+Swagger 網址：
+http://localhost:8080/swagger-ui/index.html

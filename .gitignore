@@ -16,6 +16,7 @@ backend/src/main/resources/application-local.properties
 
 # Build outputs and local tooling (all modules)
 node_modules/
+.npm-cache/
 dist/
 target/
 *.tsbuildinfo
@@ -57,3 +58,11 @@ captures/
 *.aab
 mobile-app/build-logs/
 mobile-app/**/google-services.json
+
+# Release exclusions
+_integration/
+.vite/
+coverage/
+temp/
+tmp/
+.kotlin/

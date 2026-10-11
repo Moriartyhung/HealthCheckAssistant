@@ -9,6 +9,48 @@
 | GET | /api/patients/:patientId/exams | 無 | `{patientId, patientName, completedCount, totalCount, exams: Exam[]}` |
 | GET | /api/patients/:patientId/next | 無 | `{nextExam: Exam 或 null, message}` |
 | GET | /api/admin/progress | 無 | `[{patientId, patientName, completedCount, totalCount}]` |
+| POST | /api/admin/patients | `{patientId, patientName, examIds?: string[]}` | 201 PatientDetail，Location 指向單筆資源 |
+| GET | /api/admin/patients | 無 | 200 `[{patientId, patientName}]`，依病歷號排序 |
+| GET | /api/admin/patients/:patientId | 無 | 200 PatientDetail |
+| PUT | /api/admin/patients/:patientId | `{patientName, examIds?: string[]}` | 200 PatientDetail |
+| DELETE | /api/admin/patients/:patientId | 無 | 200 `{message:"受檢者已刪除"}` |
+| GET | /api/admin/exams | 無 | 200 ExamCatalogItem[] |
+
+## PATIENT 資料管理（V1）
+
+新增與修改可同時寫入 PATIENT 基本資料及 PATIENT_EXAM 安排，其他資料表只讀取。病歷號建立後不可修改；PUT 若帶 patientId 或其他未知欄位即回 400。不接受 status、completedAt 等完成欄位。
+
+PatientDetail：`{patientId, patientName, exams: ManagedPatientExam[]}`。
+
+ManagedPatientExam：`{examId, examName, stationId, stationName, startTime, endTime, status, completedAt, removable, removalBlockReason}`。完成時間為 ISO 8601 或 null；removalBlockReason 為不可移除原因或 null。
+
+ExamCatalogItem：`{examId, examName, stationId, stationName, startTime, endTime, requiredExamIds: string[]}`，從 EXAM_ITEM、CHECK_STATION、EXAM_PREREQUISITE 查詢。
+
+examIds 是完整目標安排。新增省略或 null 表示沒有安排；更新省略或 null 保留既有安排（相容舊姓名編輯 API）；更新 `[]` 表示要求移除全部安排，仍須通過保護規則。項目代碼必須為非空字串，不可重複、不移除前後空白。無效或重複項目回 400。
+
+所有前置項目都必須在目標安排中（已完成項目也保留在集合中），前置鏈不可循環。由於現有 WS1 以站點定位單一檢查，同一受檢者同站點只允許一項安排，包含已完成項目；EXAM_ITEM 清單仍可包含同站點多個不同選項。缺少前置條件、循環、同站多項衝突回 409，不修改 WS1 的既有行為。
+
+新增以同一 @Transactional 交易寫入病人與所有 PENDING、COMPLETED_AT=NULL 的安排；修改以同一交易更新姓名與增減安排。修改先鎖定 PATIENT，再鎖定既有 PATIENT_EXAM，重新讀取狀態，僅移除 PENDING 且沒有確認碼的安排。已完成、有效 WS1 確認碼（USED_AT IS NULL）或歷史確認碼關聯皆禁止移除，回 409；確認碼 schema 沒有到期欄位。保留歷史確認碼是既有外鍵及不刪除歷史資料的要求。外鍵衝突回 409，資料庫交易失敗回 500 並回滾，不更改保留項目的狀態或完成時間。
+
+新增需提供字串病歷號與姓名；更新需提供字串姓名。不可空白或含控制字元，新增欄位及更新姓名會移除前後空白。病歷號不可含 `/`、`\`、`;`，也不可為 `.` 或 `..`，以避免路由歧義。欄位限制依現有 Oracle DDL：病歷號 20 BYTE、姓名 100 BYTE；後端用 Oracle LENGTHB 依實際資料庫字元集檢查，不以中文字數代替 byte 數。
+
+新增先查重，並處理並行 INSERT 的唯一鍵衝突：回 409 `{message:"病歷號已存在"}`。不存在的單筆查詢、更新或刪除回 404。非法資料回 400；資料庫失敗回 500，沿用 `{message}`，不洩露 SQL。
+
+刪除使用單一 DELETE，NOT EXISTS 同時檢查 PATIENT_EXAM 與 CHECK_CONFIRMATION；任何狀態的關聯紀錄皆阻擋刪除。Oracle 外鍵另保護並行新增關聯造成的衝突，回 409 `{message:"受檢者已有關聯檢查紀錄或確認碼，無法刪除"}`。不使用 CASCADE，不刪除關聯資料。
+
+Web 操作入口：`/admin` 進度總覽下方的「受檢者資料管理」。上方表單新增／編輯姓名與多選健檢安排，顯示站點、時段、前置條件及既有狀態；不可移除項目鎖定。同站點其他選項停用，缺少前置項目時不能儲存。下方提供單筆查詢／顯示全部，每列「查看安排」、「編輯」、「刪除」，安排明細顯示狀態、完成時間與移除限制，刪除須確認。清單 API 載入失敗時停用儲存。變更後重新查詢列表並使進度／病患查詢快取失效。CRUD 使用現有 fetch → Spring Boot → Oracle；MSW 模式停用此區塊，API adapter 也拒絕呼叫，不新增管理 Mock handler。
+
+原五支健檢 API 的路徑與流程不變，Android App 不變。未加入認證、分頁或 V2 排程。
+
+### CRUD 驗證方式
+
+`backend`：`./mvnw.cmd test` 執行一般測試；CRUD API 測試執行真 Controller、Service、Repository，以 JdbcTemplate double 隔離外部 Oracle，並不代表 Oracle 已實測。`frontend`：`npm test` 與 `npm run build`；介面測試只在測試檔替代 fetch 回應，正式程式沒有替代資料。
+
+需在已安全設定 DB_PASSWORD 的 session 中，於 backend 執行 `./mvnw.cmd '-Dtest=PatientManagementOracleIT,PatientArrangementOracleIT' test` 才是 Oracle opt-in 整合驗證。基本 CRUD 的三個案例使用唯一病人並回滾，關聯拒刪案例只讀既有資料。安排的兩個案例使用既有真實項目清單：新增／查詢／姓名及安排修改在測試交易回滾；故障案例透過真 HTTP 交易注入第二項新增失敗，直接查 Oracle 確認沒有部分資料，最後只清理自身唯一測試病歷號。它不更動既有受檢者、完成狀態或參考表。若清單沒有足夠不同站點且符合前置條件的項目，會明確跳過。預設一般測試不執行 *IT；沒有 DB_PASSWORD 時五個 Oracle 測試跳過，不能算驗證通過。
+
+本階段依 repository 的 Oracle DDL 檢查主鍵、外鍵及約束；尚未連線比對正式資料庫 schema，也未驗證真實鎖定與並行 WS1／WS2 情境。一般安排 API 測試執行完整分層，以 JDBC 及交易管理器 doubles 測試失敗回滾邊界；不冒充 Oracle 實測。
+
+Swagger `/v3/api-docs` 由 Controller 註解生成。若需更新根目錄 api-docs.json，可於 backend 執行 `./mvnw.cmd -Dtest=ApplicationSmokeTest -Dopenapi.snapshot=../api-docs.json test`；此命令只產生契約，不驗證 Oracle。
 
 Exam: `{examId, examName, stationId, stationName, startTime, endTime, status, completedAt}`。
 status 僅 `PENDING`、`COMPLETED`。時間為 HH:mm，completedAt 為 ISO 8601 或 null。

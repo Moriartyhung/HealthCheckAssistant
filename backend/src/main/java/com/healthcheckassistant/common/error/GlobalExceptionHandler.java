@@ -48,8 +48,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<ApiErrorResponse> invalidBody(Exception exception, HttpServletRequest request) {
+        if (request.getRequestURI().startsWith(request.getContextPath() + "/api/admin/patients")) {
+            return ResponseEntity.badRequest().body(new ApiErrorResponse("請提供合法的受檢者資料；修改時僅可提供姓名與健檢項目代碼"));
+        }
         String message = request.getRequestURI().equals(request.getContextPath() + "/api/ws2/complete")
                 ? "請提供 code1" : "請提供受檢者與站點代碼";
         return ResponseEntity.badRequest().body(new ApiErrorResponse(message));
+    }
+
+    @ExceptionHandler(InvalidPatientDataException.class)
+    public ResponseEntity<ApiErrorResponse> invalidPatient(InvalidPatientDataException exception) {
+        return ResponseEntity.badRequest().body(new ApiErrorResponse(exception.getMessage()));
     }
 }
